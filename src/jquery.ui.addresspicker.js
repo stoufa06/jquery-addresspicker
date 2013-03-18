@@ -20,6 +20,7 @@
         draggableMarker: true,
         regionBias: null,
         updateCallback: null,
+        geocodePosition : true,
         mapOptions: {
             zoom: 5, 
             center: new google.maps.LatLng(46, 2), 
@@ -107,10 +108,68 @@
       }
     },
     
-    _markerMoved: function() {
-      this._updatePosition(this.gmarker.getPosition());
-    },
-    
+    _geocodePosition : function geocodePosition() 
+      {
+        var self = this;
+        this.geocoder.geocode
+        ({
+          latLng: this.gmarker.getPosition()
+        }
+         , 
+         function(results, status) 
+         {
+           if (status == google.maps.GeocoderStatus.OK) 
+           {
+             var value = false;
+             var address = results[0];
+             self.element.val(results[0].formatted_address);
+             if (self.locality) {
+               value = self._findInfo(address, 'locality');
+               self.locality.val(value ? value : '');
+             }
+             if (self.administrative_area_level_2) {
+               value = self._findInfo(address, 'administrative_area_level_2');
+               self.administrative_area_level_2.val(value ? value : '');
+             }
+             if (self.administrative_area_level_1) {
+               value=self._findInfo(address, 'administrative_area_level_1');
+               self.administrative_area_level_1.val(value ? value : '');
+             }
+             if (self.country) {
+               value = self._findInfo(address, 'country');
+               self.country.val(value ? value : '');
+             }
+             if (self.postal_code) {
+               value = self._findInfo(address, 'postal_code');
+               self.postal_code.val(value ? value : '');
+             }
+             if (self.type) {
+               value = address.types[0];
+               self.type.val(value ? value : '');
+             }
+           }
+           else {
+		self.lat.val('');
+		self.lng.val('');
+		self.element.val('');
+		self.locality.val('');
+		self.administrative_area_level_2.val('');
+		self.administrative_area_level_1.val('');
+		self.country.val('');
+		self.postal_code.val('');
+		self.type.val('');
+		
+	   }
+         }
+        );
+      }
+      ,
+      _markerMoved: function() {
+        this._updatePosition(this.gmarker.getPosition());
+        if(this.options.geocodePosition){
+          this._geocodePosition();
+        }
+      }    
     // Autocomplete source method: fill its suggests with google geocoder results
     _geocode: function(request, response) {
         var address = request.term, self = this;
@@ -151,24 +210,34 @@
       }
       this._updatePosition(address.geometry.location);
       
+      var value = false;
+		
+	
       if (this.locality) {
-        this.locality.val(this._findInfo(address, 'locality'));
+      	value = this._findInfo(address, 'locality'); 
+      	this.locality.val(value ? value : '');
+      
       }
       if (this.administrative_area_level_2) {
-        this.administrative_area_level_2.val(this._findInfo(address, 'administrative_area_level_2'));
+      	value = this._findInfo(address, 'administrative_area_level_2');
+      	this.administrative_area_level_2.val(value ? value : '');
       }
       if (this.administrative_area_level_1) {
-        this.administrative_area_level_1.val(this._findInfo(address, 'administrative_area_level_1'));
+      	value=this._findInfo(address, 'administrative_area_level_1');
+      	this.administrative_area_level_1.val(value ? value : '');
       }
       if (this.country) {
-        this.country.val(this._findInfo(address, 'country'));
+      	value = this._findInfo(address, 'country'); 
+      	this.country.val(value ? value : '');
       }
       if (this.postal_code) {
-        this.postal_code.val(this._findInfo(address, 'postal_code'));
-      }			
-      if (this.type) {
-        this.type.val(address.types[0]);
+      	value = this._findInfo(address, 'postal_code');
+      	this.postal_code.val(value ? value : '');
       }
+      if (this.type) {
+      	value = address.types[0];
+      	this.type.val(value ? value : '');
+      } 
     },
     
     _selectAddress: function(event, ui) {
